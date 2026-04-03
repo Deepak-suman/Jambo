@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Categories Table
+model Category {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  icon        String?     // Image path or emoji
+  createdAt   DateTime    @default(now())
+}
+
+// Menu Items Table
+model MenuItem {
+  id          Int         @id @default(autoincrement())
+  name        String
+  price       Float       // This will act as Full Price
+  halfPrice   Float?      // Optional Half Price
+  image       String?     // Optional Image URL/Path
+  category    String      // e.g., "Starters", "Main Course", "Drinks"
+  isAvailable Boolean     @default(true)
+  orderItems  OrderItem[]
+}
+
+// Orders Table (Table number ke hisaab se)
+model Order {
+  id              Int         @id @default(autoincrement())
+  tableNumber     Int
+  customerName    String?
+  status          String      @default("ACTIVE") // ACTIVE, PREPARING, COMPLETED
+  isPaid          Boolean     @default(false)    // True when UPI payment is successful
+  isBillRequested Boolean     @default(false)
+  isBillApproved  Boolean     @default(false)
+  paymentMode     String?     // "CASH" or "ONLINE"
+  totalAmount     Float       @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
+  rating          OrderRating?
+}
+
+// Order Items (Ek order mein kya kya hai)
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  menuItemId  Int
+  quantity    Int
+  size        String   @default("Full") // "Full" or "Half"
+  roundNumber Int      @default(1)      // Pehla order, dusra order etc.
+  status      String   @default("PENDING") // PENDING, COMPLETED (Per Round completion)
+  addedAt     DateTime @default(now())  // Item order me kab add hua
+  order       Order    @relation(fields: [orderId], references: [id])
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+// Order Ratings
+model OrderRating {
+  id              Int      @id @default(autoincrement())
+  orderId         Int      @unique
+  foodTaste       Int      @default(0)
+  service         Int      @default(0)
+  cleanliness     Int      @default(0)
+  chef            Int      @default(0)
+  staff           Int      @default(0)
+  seatingComfort  Int      @default(0)
+  createdAt       DateTime @default(now())
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
