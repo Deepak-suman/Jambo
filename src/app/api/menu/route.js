@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { saveUploadedFile } from "@/lib/uploadFile";
 
 export const dynamic = "force-dynamic";
 
@@ -30,11 +31,11 @@ export async function POST(req) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // On Vercel, local filesystem is read-only - skip file uploads.
-    // If image is a URL string (not a file object), use it directly.
     let imageUrl = null;
-    if (imageFile && typeof imageFile === 'string' && imageFile.startsWith('http')) {
-      imageUrl = imageFile;
+    if (imageFile && typeof imageFile === "object") {
+        imageUrl = await saveUploadedFile(imageFile);
+    } else if (imageFile && typeof imageFile === 'string' && imageFile.startsWith('http')) {
+        imageUrl = imageFile;
     }
 
     const halfPrice = halfPriceRaw && !isNaN(parseFloat(halfPriceRaw))

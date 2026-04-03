@@ -12,7 +12,7 @@ datasource db {
 model Category {
   id          Int         @id @default(autoincrement())
   name        String      @unique
-  icon        String?     // Image path or emoji
+  icon        String?     @db.LongText // Image path or emoji
   createdAt   DateTime    @default(now())
 }
 
@@ -22,7 +22,7 @@ model MenuItem {
   name        String
   price       Float       // This will act as Full Price
   halfPrice   Float?      // Optional Half Price
-  image       String?     // Optional Image URL/Path
+  image       String?     @db.LongText // Optional Image URL/Path
   category    String      // e.g., "Starters", "Main Course", "Drinks"
   isAvailable Boolean     @default(true)
   orderItems  OrderItem[]

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { saveUploadedFile } from "@/lib/uploadFile";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +24,11 @@ export async function POST(req) {
 
     if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
-    // On Vercel, local filesystem is read-only. 
-    // We only support emoji/text icons (no file upload).
-    const iconPath = imageText || null;
+    let iconPath = imageText || null;
+    const iconFile = formData.get("image");
+    if (iconFile && typeof iconFile === "object") {
+        iconPath = await saveUploadedFile(iconFile);
+    }
 
     const category = await prisma.category.create({
       data: {
