@@ -13,12 +13,10 @@ export async function GET() {
   }
 }
 
-import { saveUploadedFile } from "@/lib/uploadFile";
-
 export async function POST(req) {
   try {
     const formData = await req.formData();
-    
+
     const name = formData.get("name");
     const price = formData.get("price");
     const category = formData.get("category");
@@ -30,14 +28,16 @@ export async function POST(req) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // On Vercel, local filesystem is read-only - skip file uploads.
+    // If image is a URL string (not a file object), use it directly.
     let imageUrl = null;
-    if (imageFile && imageFile.name) {
-       imageUrl = await saveUploadedFile(imageFile);
+    if (imageFile && typeof imageFile === 'string' && imageFile.startsWith('http')) {
+      imageUrl = imageFile;
     }
 
-    const halfPrice = halfPriceRaw && !isNaN(parseFloat(halfPriceRaw)) 
-        ? parseFloat(halfPriceRaw) 
-        : null;
+    const halfPrice = halfPriceRaw && !isNaN(parseFloat(halfPriceRaw))
+      ? parseFloat(halfPriceRaw)
+      : null;
 
     const newItem = await prisma.menuItem.create({
       data: {
