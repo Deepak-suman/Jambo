@@ -164,6 +164,8 @@ export default function OrderStatusPage({ params }) {
   
   const [now, setNow] = React.useState(Date.now());
   const [hasRated, setHasRated] = React.useState(false);
+  const [isPaidLocally, setIsPaidLocally] = React.useState(false);
+  const [isCashLocally, setIsCashLocally] = React.useState(false);
   const { order, loading, error } = useOrderPolling(unwrappedParams.orderId, 3000); // 3 sec poll
 
   useEffect(() => {
@@ -301,7 +303,7 @@ export default function OrderStatusPage({ params }) {
                    Wait for the admin to send the final bill.
                  </p>
                </div>
-            ) : !order.isBillApproved ? (
+            ) : (!order.isBillApproved && !isCashLocally) ? (
                <div className="text-center animate-fade-in">
                  <div className="bg-blue-50 text-blue-700 py-2 px-4 rounded-xl font-bold mb-4 inline-block border border-blue-100">
                    Total Bill: ₹{order.totalAmount}
@@ -334,6 +336,7 @@ export default function OrderStatusPage({ params }) {
                          body: JSON.stringify({ isBillApproved: true, paymentMode: "CASH" })
                        });
                        toast.success("Cash Selected!", { id: "bill" });
+                       setIsCashLocally(true);
                      }}
                      className="flex-1 bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200 font-bold py-4 rounded-xl transition-transform active:scale-95"
                    >
@@ -341,7 +344,7 @@ export default function OrderStatusPage({ params }) {
                    </button>
                  </div>
                </div>
-            ) : !order.isPaid ? (
+            ) : (!order.isPaid && !isPaidLocally) ? (
                <div className="text-center">
                  {order.paymentMode === "ONLINE" ? (
                    <>
@@ -356,6 +359,7 @@ export default function OrderStatusPage({ params }) {
                              body: JSON.stringify({ isPaid: true })
                            });
                            toast.success("Payment Successful!", { id: "upi" });
+                           setIsPaidLocally(true);
                          }, 1500);
                        }}
                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-transform active:scale-95"
@@ -387,7 +391,7 @@ export default function OrderStatusPage({ params }) {
 
       </div>
 
-      {order.status === "COMPLETED" && order.isPaid && !hasRated && (
+      {order.status === "COMPLETED" && (order.isPaid || isPaidLocally || order.paymentMode === "CASH" || isCashLocally) && !hasRated && (
          <RatingModal orderId={order.id} onClose={() => setHasRated(true)} />
       )}
     </div>

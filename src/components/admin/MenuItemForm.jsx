@@ -21,12 +21,17 @@ export default function MenuItemForm({ item, onSubmit, onCancel }) {
     fetch("/api/categories")
       .then(res => res.json())
       .then(data => {
-         setCategories(data);
-         // Auto-select first category if no item is being edited and category isn't set
-         if (data.length > 0 && !item && formData.category === "Main Course") {
-           setFormData(prev => ({ ...prev, category: data[0].name }));
+         if (Array.isArray(data)) {
+           setCategories(data);
+           // Auto-select first category if no item is being edited and category isn't set
+           if (data.length > 0 && !item && formData.category === "Main Course") {
+             setFormData(prev => ({ ...prev, category: data[0].name }));
+           }
+         } else {
+           console.error("Expected array for categories, got:", data);
          }
-      });
+      })
+      .catch(err => console.error("Error fetching categories:", err));
   }, []);
 
   useEffect(() => {

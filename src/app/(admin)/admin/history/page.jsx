@@ -61,7 +61,7 @@ export default function OrderHistoryPage() {
                    <th className="p-5 font-bold">Customer</th>
                    <th className="p-5 font-bold">Total</th>
                    <th className="p-5 font-bold">Payment</th>
-                   <th className="p-5 font-bold text-center">Details</th>
+                   <th className="p-5 font-bold text-center">Actions</th>
                  </tr>
                </thead>
                <tbody className="divide-y divide-gray-100">
@@ -113,12 +113,23 @@ export default function OrderHistoryPage() {
                          </div>
                        </td>
                        <td className="p-5 text-center">
-                         <button 
-                           onClick={() => setSelectedOrder(order)}
-                           className="inline-flex items-center justify-center bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 w-10 h-10 rounded-xl transition-colors"
-                         >
-                           <ChevronRight size={20} />
-                         </button>
+                         <div className="flex items-center justify-center gap-2">
+                           {order.rating && (
+                             <button
+                               onClick={() => setSelectedOrder(order)}
+                               className="inline-flex items-center gap-1.5 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-xl transition-colors font-bold text-xs border border-yellow-200 shadow-sm whitespace-nowrap"
+                             >
+                               <Star size={14} className="fill-yellow-500" /> View Rating
+                             </button>
+                           )}
+                           <button 
+                             onClick={() => setSelectedOrder(order)}
+                             className="inline-flex items-center justify-center bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 w-10 h-10 rounded-xl transition-colors"
+                             title="View Details"
+                           >
+                             <ChevronRight size={20} />
+                           </button>
+                         </div>
                        </td>
                      </tr>
                    );
