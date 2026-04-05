@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import toast, { Toaster } from "react-hot-toast";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Search } from "lucide-react";
 
 import Navbar from "@/components/shared/Navbar";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
@@ -20,6 +20,7 @@ function MenuContent() {
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -110,10 +111,12 @@ function MenuContent() {
     </div>
   );
 
-  // Filter items based on category selection
-  const filteredItems = selectedCategory === "All" 
-    ? menuItems 
-    : menuItems.filter(item => item.category === selectedCategory);
+  // Filter items based on category selection and search term
+  const filteredItems = menuItems.filter(item => {
+    const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const handleCheckout = async () => {
     try {
@@ -146,6 +149,17 @@ function MenuContent() {
           selected={selectedCategory} 
           onSelect={setSelectedCategory} 
         />
+        
+        <div className="mt-5 relative z-10 group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-pink-500 transition-colors" size={20} />
+          <input 
+            type="text"
+            placeholder="Search for your favorite dishes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white border border-slate-200 outline-none py-3.5 pl-11 pr-4 rounded-2xl shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10 font-bold text-slate-800 transition-all placeholder:text-slate-400 placeholder:font-medium"
+          />
+        </div>
         
         <div className="grid grid-cols-1 gap-4 mt-6">
           {filteredItems.map(item => (
