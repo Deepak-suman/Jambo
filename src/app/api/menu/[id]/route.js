@@ -46,9 +46,16 @@ export async function DELETE(req, { params }) {
     const { id } = await params;
     const parsedId = parseInt(id);
 
-    // Pehle check karein ki kya is item se jude koi purane orders hain
-    // Agar hain, toh direct delete karne se error aa sakti hai. 
-    // Is simplified version me hum direct delete kar rahe hain.
+    const existingOrders = await prisma.orderItem.count({
+      where: { menuItemId: parsedId }
+    });
+
+    if (existingOrders > 0) {
+      return NextResponse.json({ 
+        error: "Is item ki pehle se order history maujood hai isliye ise permanently delete nahi kiya ja sakta. Kripya isko edit karke 'Out of Stock' (Available = False) mark kar dein." 
+      }, { status: 400 });
+    }
+
     await prisma.menuItem.delete({
       where: { id: parsedId }
     });
@@ -57,4 +64,4 @@ export async function DELETE(req, { params }) {
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete item" }, { status: 500 });
   }
-}
+}
