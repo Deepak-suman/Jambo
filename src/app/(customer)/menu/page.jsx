@@ -150,14 +150,14 @@ function MenuContent() {
           onSelect={setSelectedCategory} 
         />
         
-        <div className="mt-5 relative z-10 group">
+        <div className="mt-1 relative z-10 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-pink-500 transition-colors" size={20} />
           <input 
             type="text"
             placeholder="Search for your favorite dishes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white border border-slate-200 outline-none py-3.5 pl-11 pr-4 rounded-2xl shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10 font-bold text-slate-800 transition-all placeholder:text-slate-400 placeholder:font-medium"
+            className="w-full bg-white border border-slate-200 outline-none py-2 pl-11 pr-4 rounded-2xl shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10 font-bold text-slate-800 transition-all placeholder:text-slate-400 placeholder:font-medium"
           />
         </div>
         

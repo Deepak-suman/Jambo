@@ -7,6 +7,33 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { CheckCircle2, Clock, ChefHat, ArrowLeft, Trash2, Edit2, X, Check, Star } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
+function playChime() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+  const audioCtx = new AudioContext();
+  
+  const strike = (delayMs) => {
+    setTimeout(() => {
+      if(audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+      osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 1.5);
+      gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 1.5);
+    }, delayMs);
+  };
+
+  strike(0);
+  strike(300);
+  strike(600);
+}
+
 function RatingModal({ orderId, onClose }) {
   const [ratings, setRatings] = React.useState({
     foodTaste: 0, service: 0, cleanliness: 0, chef: 0, staff: 0, seatingComfort: 0
@@ -166,7 +193,36 @@ export default function OrderStatusPage({ params }) {
   const [hasRated, setHasRated] = React.useState(false);
   const [isPaidLocally, setIsPaidLocally] = React.useState(false);
   const [isCashLocally, setIsCashLocally] = React.useState(false);
+  const [hasPlayedBell, setHasPlayedBell] = React.useState(false);
   const { order, loading, error } = useOrderPolling(unwrappedParams.orderId, 3000); // 3 sec poll
+
+  // Prevent phone from sleeping using Wake Lock API
+  useEffect(() => {
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+      } catch (err) {}
+    };
+    requestWakeLock();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') requestWakeLock();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock !== null) wakeLock.release();
+    };
+  }, []);
+
+  // Play Bell and vibrate when bill arrives
+  useEffect(() => {
+    if (order?.isBillRequested && !order?.isBillApproved && !hasPlayedBell) {
+      setHasPlayedBell(true);
+      playChime();
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+    }
+  }, [order?.isBillRequested, order?.isBillApproved, hasPlayedBell]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
