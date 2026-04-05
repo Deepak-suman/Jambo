@@ -43,6 +43,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "Category name already exists" }, { status: 400 });
     }
     console.error("POST category error:", error);
-    return NextResponse.json({ error: "Failed to create category" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to create category" }, { status: 500 });
   }
 }

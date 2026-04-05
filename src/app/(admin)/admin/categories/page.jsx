@@ -4,6 +4,45 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { CopyPlus, Trash2, Image as ImageIcon } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
+const compressImage = (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const maxWidth = 300;
+        const maxHeight = 300;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = width * ratio;
+          height = height * ratio;
+        }
+        
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, { type: file.type || "image/jpeg", lastModified: Date.now() }));
+          } else {
+            resolve(file);
+          }
+        }, file.type || "image/jpeg", 0.8);
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+
 export default function ManageCategories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +73,14 @@ export default function ManageCategories() {
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append("name", name);
-    if (image) formData.append("image", image);
+    if (image) {
+      try {
+        const compressed = await compressImage(image);
+        formData.append("image", compressed);
+      } catch (err) {
+        formData.append("image", image);
+      }
+    }
 
     try {
       const res = await fetch("/api/categories", {
