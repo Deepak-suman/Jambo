@@ -34,6 +34,20 @@ function playChime() {
   strike(600);
 }
 
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        if (window.Razorpay) {
+            resolve(true);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
+
 function RatingModal({ orderId, onClose }) {
   const [ratings, setRatings] = React.useState({
     foodTaste: 0, service: 0, cleanliness: 0, chef: 0, staff: 0, seatingComfort: 0
@@ -195,6 +209,80 @@ export default function OrderStatusPage({ params }) {
   const [isCashLocally, setIsCashLocally] = React.useState(false);
   const [hasPlayedBell, setHasPlayedBell] = React.useState(false);
   const { order, loading, error } = useOrderPolling(unwrappedParams.orderId, 3000); // 3 sec poll
+
+  const handleRazorpayPayment = async () => {
+    toast.loading("Initiating Secure Gateway...", { id: "p_init" });
+    const isScriptLoaded = await loadRazorpayScript();
+    if (!isScriptLoaded) {
+        toast.error("Failed to load Razorpay SDK", { id: "p_init" });
+        return;
+    }
+
+    try {
+        const createRes = await fetch('/api/payment/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: order.id }),
+        });
+        const orderData = await createRes.json();
+
+        if (orderData.error) {
+            toast.error(orderData.error, { id: "p_init" });
+            return;
+        }
+
+        toast.dismiss("p_init");
+
+        const options = {
+            key: orderData.key,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: "Jambo Menu",
+            description: `Payment for Order #${order.id}`,
+            order_id: orderData.id,
+            handler: async function (response) {
+                toast.loading("Verifying payment...", { id: "p_verify" });
+                try {
+                    const verifyRes = await fetch('/api/payment/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            orderId: order.id,
+                        }),
+                    });
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.success) {
+                        toast.success("Payment Verified & Successful!", { id: "p_verify" });
+                        setIsPaidLocally(true);
+                    } else {
+                        toast.error("Payment Verification Failed", { id: "p_verify" });
+                    }
+                } catch (e) {
+                     toast.error("Network error during verification", { id: "p_verify" });
+                }
+            },
+            prefill: {
+                name: order.customerName || "Guest Admin",
+                contact: "",
+            },
+            theme: {
+                color: "#4f46e5"
+            }
+        };
+
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.on('payment.failed', function (response){
+           toast.error(response.error.description || "Payment Failed");
+        });
+        paymentObject.open();
+
+    } catch (e) {
+        toast.error("Payment setup failed", { id: "p_init" });
+    }
+  };
 
   // Prevent phone from sleeping using Wake Lock API
   useEffect(() => {
@@ -406,21 +494,10 @@ export default function OrderStatusPage({ params }) {
                    <>
                      <h3 className="font-black text-xl mb-4 text-slate-800">Online Checkout</h3>
                      <button 
-                       onClick={async () => {
-                         toast.loading("Initiating UPI...", { id: "upi" });
-                         setTimeout(async () => {
-                           await fetch(`/api/orders/${order.id}`, { 
-                             method: "PATCH",
-                             headers: {'Content-Type': 'application/json'},
-                             body: JSON.stringify({ isPaid: true })
-                           });
-                           toast.success("Payment Successful!", { id: "upi" });
-                           setIsPaidLocally(true);
-                         }, 1500);
-                       }}
+                       onClick={handleRazorpayPayment}
                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-transform active:scale-95"
                      >
-                       Pay ₹{order.totalAmount} via UPI Mock
+                       Pay ₹{order.totalAmount} Securely
                      </button>
                    </>
                  ) : (
