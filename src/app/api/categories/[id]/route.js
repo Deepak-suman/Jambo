@@ -6,7 +6,7 @@ import path from "path";
 export async function DELETE(req, { params }) {
   try {
     const { id } = await params;
-    const cid = parseInt(id);
+    const cid = id;
     
     // Fetch to see if it has an icon
     const category = await prisma.category.findUnique({ where: { id: cid } });

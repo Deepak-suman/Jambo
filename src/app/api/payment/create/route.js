@@ -7,7 +7,7 @@ export async function POST(req) {
     const { orderId } = await req.json();
 
     const dbOrder = await prisma.order.findUnique({
-      where: { id: parseInt(orderId) }
+      where: { id: orderId }
     });
 
     if (!dbOrder) {

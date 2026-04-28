@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export async function PATCH(req, { params }) {
   try {
     const { id } = await params;
-    const orderId = parseInt(id);
+    const orderId = id;
     const { roundNumber } = await req.json();
 
     if (!roundNumber || isNaN(orderId)) {

@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-export default function AdminLogin() {
-  const [username, setUsername] = useState("");
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,31 +16,32 @@ export default function AdminLogin() {
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
     });
 
-    if (res.ok) {
-      // Login successful, dashboard pe bhejo
-      router.push("/admin/dashboard");
-      router.refresh(); // Refresh taaki middleware state update ho jaye
-    } else {
-      setError("Galat Username ya Password!");
+    if (res?.error) {
+      setError("Galat Email ya Password!");
       setLoading(false);
+    } else {
+      // Refresh to update server components next-auth state
+      router.refresh();
+      // Redirect handled by next-auth or we can manually route
+      router.push("/admin/dashboard"); 
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <div className="bg-white p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-md border border-gray-100">
         <div className="text-center mb-10">
           <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl mx-auto mb-4 shadow-lg shadow-blue-500/30 flex items-center justify-center">
              <span className="text-white font-black text-2xl">J</span>
           </div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Admin Portal</h1>
-          <p className="text-slate-500 font-medium mt-2">Sign in to manage your restaurant</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Login Portal</h1>
+          <p className="text-slate-500 font-medium mt-2">Sign in to manage your spaces</p>
         </div>
         
         {error && (
@@ -49,12 +52,12 @@ export default function AdminLogin() {
         
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-gray-700 font-semibold mb-1 text-sm">Username</label>
+            <label className="block text-gray-700 font-semibold mb-1 text-sm">Email Address</label>
             <input 
-              type="text" 
+              type="email" 
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -67,6 +70,11 @@ export default function AdminLogin() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <div className="text-right mt-1">
+              <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                Forgot Password?
+              </Link>
+            </div>
           </div>
           <button 
             type="submit" 

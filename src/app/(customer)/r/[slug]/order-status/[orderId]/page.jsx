@@ -366,7 +366,7 @@ export default function OrderStatusPage({ params }) {
             </div>
             {order.status !== "CLOSED" && !order.isPaid && !order.isBillRequested && (
               <button 
-                onClick={() => router.push(`/menu?table=${order.tableNumber}`)} 
+                onClick={() => router.push(`/r/${unwrappedParams.slug}/menu?table=${order.tableNumber}`)} 
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm shadow-indigo-600/20 transition-all active:scale-95 whitespace-nowrap"
               >
                 + Order More

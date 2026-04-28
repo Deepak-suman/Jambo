@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { saveUploadedFile } from "@/lib/uploadFile";
+import { getTenantId } from "@/lib/getTenant";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const restaurantId = await getTenantId(req);
+    if (!restaurantId) {
+      return NextResponse.json({ error: "Tenant not identified" }, { status: 400 });
+    }
+
     const items = await prisma.menuItem.findMany({
+      where: { restaurantId },
       orderBy: { category: "asc" }
     });
     return NextResponse.json(items, { status: 200 });
@@ -18,6 +25,11 @@ export async function GET() {
 
 export async function POST(req) {
   try {
+    const restaurantId = await getTenantId(req);
+    if (!restaurantId) {
+      return NextResponse.json({ error: "Unauthorized or Tenant not identified" }, { status: 401 });
+    }
+
     const formData = await req.formData();
 
     const name = formData.get("name");
@@ -50,6 +62,7 @@ export async function POST(req) {
         image: imageUrl,
         category,
         isAvailable,
+        restaurantId, // Add to schema
       }
     });
 

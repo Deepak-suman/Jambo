@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req, { params }) {
   try {
     const { id } = await params;
-    const orderId = parseInt(id);
+    const orderId = id;
 
     const data = await req.json();
     const { foodTaste, service, cleanliness, chef, staff, seatingComfort } = data;

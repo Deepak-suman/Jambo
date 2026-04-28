@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 export async function DELETE(req, { params }) {
   try {
     const { id, itemId } = await params;
-    const pOrderId = parseInt(id);
-    const pItemId = parseInt(itemId);
+    const pOrderId = id;
+    const pItemId = itemId;
 
     // Fetch the order and item
     const orderItem = await prisma.orderItem.findUnique({
@@ -48,8 +48,8 @@ export async function DELETE(req, { params }) {
 export async function PATCH(req, { params }) {
   try {
     const { id, itemId } = await params;
-    const pOrderId = parseInt(id);
-    const pItemId = parseInt(itemId);
+    const pOrderId = id;
+    const pItemId = itemId;
     const { quantity } = await req.json();
 
     if (!quantity || quantity <= 0) {

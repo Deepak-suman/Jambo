@@ -1,11 +1,10 @@
 import QRCode from "qrcode";
 
-export async function generateQRForTable(tableNumber, baseUrl) {
-  // baseUrl examples: "http://localhost:3000" or "https://my-restaurant.com"
-  const orderUrl = `${baseUrl}/menu?table=${tableNumber}`;
+export async function generateQRForTable(tableNumber, baseUrl, slug) {
+  // Now includes tenant isolation: /r/[slug]/menu
+  const orderUrl = `${baseUrl}/r/${slug}/menu?table=${tableNumber}`;
   
   try {
-    // Generate QR code as a data URI (base64 string)
     const qrDataUrl = await QRCode.toDataURL(orderUrl, {
       width: 400,
       margin: 2,

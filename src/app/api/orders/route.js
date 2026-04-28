@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getTenantId } from "@/lib/getTenant";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
-    const { tableNumber, customerName, cartItems } = await req.json();
+    const restaurantId = await getTenantId(req);
+    const { tableNumber, customerName, cartItems, restaurantId: bodyRestaurantId } = await req.json();
+    
+    // allow restaurantId from either getTenantId or explicit body payload
+    const finalRestaurantId = restaurantId || bodyRestaurantId;
+    
+    if (!finalRestaurantId) {
+      return NextResponse.json({ error: "Tenant not identified. Missing restaurant context." }, { status: 400 });
+    }
 
     // Calculate total amount for new items
     const newItemsTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -15,7 +24,8 @@ export async function POST(req) {
       where: { 
         tableNumber: parseInt(tableNumber), 
         isPaid: false,
-        status: { not: "CLOSED" }
+        status: { not: "CLOSED" },
+        restaurantId: finalRestaurantId
       },
       include: { items: true }
     });
@@ -61,6 +71,7 @@ export async function POST(req) {
           tableNumber: parseInt(tableNumber),
           customerName,
           totalAmount: newItemsTotal,
+          restaurantId: finalRestaurantId,
           items: {
             create: cartItems.map(item => ({
               menuItemId: item.id,
@@ -78,11 +89,17 @@ export async function POST(req) {
   }
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const restaurantId = await getTenantId(req);
+    if (!restaurantId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     // Database se saare orders uthao jo abhi active/preparing/completed hain (closed nahi hain)
     const orders = await prisma.order.findMany({
-      where: { status: { not: "CLOSED" } },
+      where: { 
+        status: { not: "CLOSED" },
+        restaurantId 
+      },
       orderBy: { createdAt: "desc" },
       include: {
         items: {

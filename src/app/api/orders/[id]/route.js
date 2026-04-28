@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export async function PATCH(req, { params }) {
   try {
     const { id } = await params;
-    const parsedId = parseInt(id);
+    const parsedId = id;
     const { status, isBillRequested, isBillApproved, paymentMode } = await req.json();
 
     const dataToUpdate = {};
@@ -29,7 +29,7 @@ export async function PATCH(req, { params }) {
 export async function GET(req, { params }) {
   try {
     const { id } = await params;
-    const parsedId = parseInt(id);
+    const parsedId = id;
     const order = await prisma.order.findUnique({
       where: { id: parsedId },
       include: { items: { include: { menuItem: true } } }

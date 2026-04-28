@@ -1,42 +1,38 @@
-import { NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-export async function middleware(request) {
-  const path = request.nextUrl.pathname;
+export default withAuth(
+  function middleware(req) {
+    const { token } = req.nextauth;
+    const path = req.nextUrl.pathname;
 
-  // Sirf /admin waale routes ko check karo
-  if (path.startsWith('/admin')) {
-    // Agar user already login page pe hai, toh check mat karo
-    if (path === '/admin/login') {
-      return NextResponse.next();
+    // Route logic for VENDOR and SUPER_ADMIN
+    if (path.startsWith("/admin")) {
+      if (token?.role === "SUPER_ADMIN") {
+         return NextResponse.redirect(new URL("/super-admin/dashboard", req.url));
+      }
+      if (token?.role !== "VENDOR") {
+         return NextResponse.redirect(new URL("/login", req.url));
+      }
+    }
+    
+    if (path.startsWith("/super-admin") && token?.role !== "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    // Browser cookies se token nikalo
-    const token = request.cookies.get('auth-token')?.value;
-
-    // Agar token nahi hai, toh login pe bhej do
-    if (!token) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
-    }
-
-    try {
-      // Token verify karo .env ki secret key se
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET || "my_super_secret_key_1234567890");
-      await jwtVerify(token, secret);
-      
-      // Token sahi hai, aage jaane do
-      return NextResponse.next();
-    } catch (error) {
-      // Token expire ho gaya ya galat hai, login pe bhej do
-      return NextResponse.redirect(new URL('/admin/login', request.url));
-    }
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+    pages: {
+      signIn: '/login',
+    },
+    secret: process.env.NEXTAUTH_SECRET || "fallback_super_secret_for_local_dev"
   }
-  
-  // Customer pages (/menu) ke liye kuch mat roko
-  return NextResponse.next();
-}
+);
 
-// Ye config batati hai ki middleware kis URL par chalega
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ["/admin/:path*", "/super-admin/:path*"],
 };

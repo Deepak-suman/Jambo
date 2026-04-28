@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
 import { saveUploadedFile } from "@/lib/uploadFile";
+import { getTenantId } from "@/lib/getTenant";
 
 export async function PUT(req, { params }) {
   try {
+    const restaurantId = await getTenantId(req);
     const { id } = await params;
     const formData = await req.formData();
     
@@ -30,7 +31,7 @@ export async function PUT(req, { params }) {
     }
 
     const updatedItem = await prisma.menuItem.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: dataToUpdate
     });
 
@@ -44,10 +45,9 @@ export async function PUT(req, { params }) {
 export async function DELETE(req, { params }) {
   try {
     const { id } = await params;
-    const parsedId = parseInt(id);
-
+    
     const existingOrders = await prisma.orderItem.count({
-      where: { menuItemId: parsedId }
+      where: { menuItemId: id }
     });
 
     if (existingOrders > 0) {
@@ -57,11 +57,11 @@ export async function DELETE(req, { params }) {
     }
 
     await prisma.menuItem.delete({
-      where: { id: parsedId }
+      where: { id: id }
     });
 
     return NextResponse.json({ message: "Item deleted successfully" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete item" }, { status: 500 });
   }
-}
+}

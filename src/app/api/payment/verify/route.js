@@ -21,7 +21,7 @@ export async function POST(req) {
     if (generated_signature === razorpay_signature) {
       // Payment is legit
       await prisma.order.update({
-        where: { id: parseInt(orderId) },
+        where: { id: orderId },
         data: {
           isPaid: true,
           paymentMode: "ONLINE",

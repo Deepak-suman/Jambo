@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import toast, { Toaster } from "react-hot-toast";
 import { CheckCircle2, Search } from "lucide-react";
@@ -15,6 +15,7 @@ import OrderForm from "@/components/customer/OrderForm";
 function MenuContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { slug } = useParams();
   const tableNumber = searchParams.get("table"); 
   
   const [menuItems, setMenuItems] = useState([]);
@@ -38,9 +39,9 @@ function MenuContent() {
     const fetchMenu = async () => {
       try {
         const [menuRes, catsRes, statusRes] = await Promise.all([
-          fetch("/api/menu"),
-          fetch("/api/categories"),
-          fetch(`/api/table/${tableNumber}/status`)
+          fetch(`/api/menu?slug=${slug}`),
+          fetch(`/api/categories?slug=${slug}`),
+          fetch(`/api/table/${tableNumber}/status?slug=${slug}`)
         ]);
 
         if (statusRes.ok) {
@@ -77,7 +78,7 @@ function MenuContent() {
 
   const submitOrder = async (customerName) => {
     try {
-      const res = await fetch("/api/orders", {
+      const res = await fetch(`/api/orders?slug=${slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -92,7 +93,7 @@ function MenuContent() {
         clearCart();
         setShowOrderForm(false);
         // Redirect to order status page with the order ID safely
-        router.push(`/order-status/${data.orderId}`);
+        router.push(`/r/${slug}/order-status/${data.orderId}`);
       } else {
         toast.error("Failed to place order. Try again.");
       }
@@ -120,7 +121,7 @@ function MenuContent() {
 
   const handleCheckout = async () => {
     try {
-      const res = await fetch(`/api/table/${tableNumber}/status`);
+      const res = await fetch(`/api/table/${tableNumber}/status?slug=${slug}`);
       if (res.ok) {
         const data = await res.json();
         if (data.hasActiveOrder) {
