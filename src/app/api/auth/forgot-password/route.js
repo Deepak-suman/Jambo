@@ -34,7 +34,9 @@ export async function POST(req) {
       },
     });
 
-    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+    const protocol = req.headers.get("x-forwarded-proto") || "http";
+    const host = req.headers.get("host");
+    const resetLink = `${protocol}://${host}/reset-password?token=${resetToken}`;
     
     // Simulate sending email by logging to console
     console.log("=========================================");
