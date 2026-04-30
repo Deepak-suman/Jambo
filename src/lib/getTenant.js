@@ -8,10 +8,10 @@ export async function getTenantId(req) {
   if (session?.user?.restaurantId) {
     return session.user.restaurantId;
   }
-  
+
   if (session?.user?.role === "SUPER_ADMIN") {
     // Super admins need to provide restaurantId manually or are exempt depending on route
-    // We will let them pass searchParam
+
   }
 
   // 2. Check URL for slug or explicit restaurantId (for public/customer facing calls)
