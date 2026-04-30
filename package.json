@@ -30,7 +30,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "npx prisma generate && npx prisma db push && next build",
+    "build": "npx prisma generate && npx prisma db push --force-reset && next build",
     "start": "next start",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
