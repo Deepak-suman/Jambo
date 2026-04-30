@@ -10,7 +10,7 @@ export async function getTenantId(req) {
   }
 
   if (session?.user?.role === "SUPER_ADMIN") {
-    // Super admins need to provide restaurantId manually or are exempt depending on route
+    // Super admins need to provide restaurantId manually 
 
   }
 
