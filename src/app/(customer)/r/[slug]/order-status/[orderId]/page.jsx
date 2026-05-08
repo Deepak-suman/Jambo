@@ -237,7 +237,7 @@ export default function OrderStatusPage({ params }) {
             key: orderData.key,
             amount: orderData.amount,
             currency: orderData.currency,
-            name: "Jambo Menu",
+            name: orderData.gatewayType === "VENDOR" && orderData.restaurantName ? orderData.restaurantName : "Jambo Menu",
             description: `Payment for Order #${order.id}`,
             order_id: orderData.id,
             handler: async function (response) {

@@ -42,6 +42,17 @@ model Restaurant {
   orders      Order[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  // --- Hybrid Payment Plan ---
+  plan              String    @default("FREE")     // "FREE" or "PAID"
+  razorpayKeyId     String?                         // Vendor's own Razorpay Key ID (PAID plan only)
+  razorpayKeySecret String?                         // Vendor's own Razorpay Secret (PAID plan only)
+
+  // --- Super Admin Charges (per vendor) ---
+  platformFee       Float     @default(0)           // Fixed fee per order (₹)
+  commissionPercent Float     @default(0)           // Commission % per order
+  gstPercent        Float     @default(0)           // GST % if applicable
+  chargesNote       String?   @db.Text              // Custom charges note for this vendor
 }
 
 // Categories Table

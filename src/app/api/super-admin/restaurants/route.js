@@ -12,7 +12,7 @@ export async function GET(req) {
       return NextResponse.json({ error: "Unauthorized. Super Admin Access only." }, { status: 403 });
     }
 
-    // Fetch all restaurants and count their orders
+    // Fetch all restaurants with gateway & charges info
     const restaurants = await prisma.restaurant.findMany({
       include: {
         _count: {
@@ -35,15 +35,24 @@ export async function GET(req) {
       vendorEmail: r.users[0]?.email || "Unknown",
       totalOrders: r._count.orders,
       totalItems: r._count.menuItems,
-      createdAt: r.createdAt
+      createdAt: r.createdAt,
+      // --- Hybrid Plan & Charges ---
+      plan: r.plan || "FREE",
+      hasGateway: !!(r.razorpayKeyId && r.razorpayKeySecret),
+      platformFee: r.platformFee || 0,
+      commissionPercent: r.commissionPercent || 0,
+      gstPercent: r.gstPercent || 0,
+      chargesNote: r.chargesNote || "",
     }));
 
     // Generate basic platform stats
     const totalVendors = await prisma.user.count({ where: { role: "VENDOR" }});
     const platformOrders = await prisma.order.count();
+    const paidVendors = restaurants.filter(r => r.plan === "PAID").length;
+    const freeVendors = restaurants.filter(r => r.plan !== "PAID").length;
     
     return NextResponse.json({ 
-       stats: { totalVendors, totalRestaurants: restaurants.length, platformOrders },
+       stats: { totalVendors, totalRestaurants: restaurants.length, platformOrders, paidVendors, freeVendors },
        restaurants: payload 
     });
 

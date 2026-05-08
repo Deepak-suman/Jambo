@@ -11,7 +11,30 @@ export async function POST(req) {
       orderId, // our DB order ID
     } = await req.json();
 
-    const secret = process.env.RAZOR_SECRET_KEY;
+    // Fetch order with restaurant for smart secret selection
+    const dbOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        restaurant: {
+          select: {
+            plan: true,
+            razorpayKeySecret: true,
+          }
+        }
+      }
+    });
+
+    if (!dbOrder) {
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
+    }
+
+    // --- SMART SECRET SELECTION ---
+    let secret;
+    if (dbOrder.restaurant.plan === "PAID" && dbOrder.restaurant.razorpayKeySecret) {
+      secret = dbOrder.restaurant.razorpayKeySecret;
+    } else {
+      secret = process.env.RAZOR_SECRET_KEY;
+    }
 
     const generated_signature = crypto
       .createHmac("sha256", secret)
