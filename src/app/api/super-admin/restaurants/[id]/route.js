@@ -109,7 +109,7 @@ export async function GET(req, { params }) {
     }
 
     // Mask the secret for security — only show last 4 chars
-    const maskedSecret = restaurant.razorpayKeySecret 
+    const maskedSecret = restaurant.razorpayKeySecret
       ? "••••••••" + restaurant.razorpayKeySecret.slice(-4)
       : null;
 
